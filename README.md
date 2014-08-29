@@ -9,6 +9,7 @@ In order to use this repo, you need to have the following:
 
  * SmartOS
  * A running CentOS instance (physical or virtual) with spare disk space
+ * sdc-vmtools
 
 ## Setup
 
