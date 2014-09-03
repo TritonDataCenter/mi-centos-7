@@ -13,7 +13,7 @@ ISO_DIR=/data/fetched-iso
 ISO_FILENAME=./centos-7-joyent.iso
 KS_CFG=./ks.cfg
 MIRROR=http://yum.tamu.edu/centos/7.0.1406/isos/x86_64
-MOUNT_POINT=/mnt
+MOUNT_POINT=/mnt/centos7
 
 function fetch_iso() {
     echo "Finding $ISO in $ISO_DIR"
@@ -39,6 +39,10 @@ function create_layout() {
     mkdir -p $DVD_LAYOUT
 
     echo "Mounting $ISO to $MOUNT_POINT"
+    if [ ! -d $MOUNT_POINT ]; then
+        echo "Creating $MOUNT_POINT..."
+        mkdir $MOUNT_POINT
+    fi
     mount $ISO_DIR/$ISO $MOUNT_POINT -o loop
     pushd $MOUNT_POINT > /dev/null 2>&1
     echo "Populating Layout"
