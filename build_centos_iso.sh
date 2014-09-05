@@ -38,6 +38,13 @@ function create_layout() {
     echo "Creating $DVD_LAYOUT"
     mkdir -p $DVD_LAYOUT
 
+    # Check if $MOUNT_POINT is already mounted
+    # This may happen if a previous build failed
+    if [ $(grep $MOUNT_POINT /proc/mounts) ]; then
+      echo "Unmounting $MOUNT_POINT from previous build..."
+        umount $MOUNT_POINT
+    fi
+
     echo "Mounting $ISO to $MOUNT_POINT"
     if [ ! -d $MOUNT_POINT ]; then
         echo "Creating $MOUNT_POINT..."
