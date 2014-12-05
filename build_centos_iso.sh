@@ -15,17 +15,12 @@ MIRROR=http://buildlogs.centos.org/rolling/7/isos/x86_64
 MOUNT_POINT=/mnt/centos7
 
 function fetch_iso() {
-    echo "Finding $ISO in $ISO_DIR"
     if [ ! -d $ISO_DIR ]; then
         mkdir -p $ISO_DIR
     fi
 
-    if [ -e $ISO_DIR/$ISO ]; then
-        echo "Using $ISO_DIR/$ISO"
-    else
-        echo "$ISO_DIR/$ISO Not Found...Fetching $ISO from $MIRROR"
-        wget -O $ISO_DIR/$ISO $MIRROR/$ISO
-    fi
+    echo "Fetching latest $ISO from $MIRROR"
+    wget -O $ISO_DIR/$ISO $MIRROR/$ISO
 }
 
 function create_layout() {
