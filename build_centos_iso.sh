@@ -18,9 +18,25 @@ function fetch_iso() {
     if [ ! -d $ISO_DIR ]; then
         mkdir -p $ISO_DIR
     fi
-
-    echo "Fetching latest $ISO from $MIRROR"
-    wget -O $ISO_DIR/$ISO $MIRROR/$ISO
+    
+    if [ ! -e $ISO_DIR/$ISO ]; then
+        echo "No local copy of $ISO. Fetching latest $ISO"
+        curl -s -o $ISO_DIR/$ISO $MIRROR/$ISO
+    fi
+    
+    echo "Checking to see if we have the latest $ISO:"
+    echo "  Getting checksum"
+    curl -s -O $MIRROR/sha256sum.txt
+    
+    ISO_NAME=$(echo $ISO | cut -f1 -d'.')
+    CHECKSUM=$(grep $ISO_NAME sha256sum.txt | cut -f1 -d' ')
+    
+    if [[ $(sha256sum $ISO_DIR/$ISO | cut -f1 -d' ') == "$CHECKSUM" ]]; then
+        echo "  Checksums match, using local copy of $ISO"
+    else
+        echo "  Checksums do not match. Fetching latest $ISO"
+        curl -s -o $ISO_DIR/$ISO $MIRROR/$ISO
+    fi
 }
 
 function create_layout() {
