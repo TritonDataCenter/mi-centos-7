@@ -7,12 +7,11 @@ CUR_TIME=`date +%FT%TZ`
 CUSTOM_RPMS=./RPMS
 DVD_LAYOUT=/data/centos-7-iso-layout
 DVD_TITLE='CentOS-7-Joyent'
-ISO=CentOS-7.0-1406-x86_64-Minimal.iso
-#ISO=CentOS-7.0-1406-x86_64-DVD.iso
+ISO=CentOS-7-x86_64-Minimal.iso
 ISO_DIR=/data/fetched-iso
 ISO_FILENAME=./centos-7-joyent.iso
 KS_CFG=./ks.cfg
-MIRROR=http://yum.tamu.edu/centos/7.0.1406/isos/x86_64
+MIRROR=http://buildlogs.centos.org/rolling/7/isos/x86_64
 MOUNT_POINT=/mnt/centos7
 
 function fetch_iso() {
