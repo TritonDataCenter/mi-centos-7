@@ -1,0 +1,260 @@
+#!/usr/bin/env bash
+#
+# Copyright (c) 2015 Joyent Inc., All rights reserved.
+#
+
+set -euo pipefail
+IFS=$'\n\t'
+
+
+ISO=
+IMAGE_NAME=
+OWNER_UUID=
+DESC=
+HOMEPAGE=
+
+IP=
+NETMASK=
+GATEWAY=
+VLAN_ID=
+NETWORK_UUID=
+
+BLANK_MANIFEST=blank.json
+BUILD_DATE=$(date +%Y%m%d)
+
+VM_UUID=
+
+usage() {
+cat <<EOF
+
+Create an kvm image from a given ISO file.
+
+Usage:
+  $0 -i <ISO> -n <IMAGE_NAME> -d <DESC> -u <HOMEPAGE> -o <OWNER_UUID> -p <IP> -m NETMASK -g <GATEWAY> -v <VLAN_ID> -U <NETWORK_UUID>
+
+Example:
+  $0 -i custom.iso -n centos-7 -d "CentOS 7 64-bit image with just essential packages installed. Ideal for users who are comfortable with setting up their own environment and tools." -u https://docs.joyent.com/images/linux/centos -o 00000000-0000-0000-0000-000000000000 -p 192.0.2.21 -m <NETMASK> -g <GATEWAY>  -v <VLAN_ID> -U <NETWORK_UUID>
+    
+OPTIONS:
+  -i The ISO
+  -n The name of the image as it would appear in the manifest
+  -d The description of the image
+  -u The homepage URL for the image
+  -o The onwer UUID for the blank VM
+  -p The IP address for the blank VM
+  -m The netmask for the blank VM
+  -g The gateway for the blank VM
+  -v The vlan ID for blank VM
+  -U The Network UUID for the blank vm
+  -h Show this message
+
+EOF
+}
+
+while getopts "hi:n:d:u:o:p:m:g:v:U:" OPTION
+do
+  case $OPTION in
+    h)
+      usage
+      exit 1
+      ;;
+    i)
+      ISO=${OPTARG}
+      ;;
+    n)
+      IMAGE_NAME=${OPTARG}
+      ;;
+    d)
+      DESC=${OPTARG}
+      ;;
+    u)
+      HOMEPAGE=${OPTARG}
+      ;;
+    o)
+      OWNER_UUID=${OPTARG}
+      ;;
+    p)
+      IP=${OPTARG}
+      ;;
+    m)
+      NETMASK=${OPTARG}
+      ;;
+    g)
+      GATEWAY=${OPTARG}
+      ;;
+    v)
+      VLAN_ID=${OPTARG}
+      ;;
+    U)
+      NETWORK_UUID=${OPTARG}
+      ;;
+    ?)
+      usage
+      exit 1
+      ;;
+  esac
+done
+
+if [[ -z ${ISO} || -z ${IMAGE_NAME} || -z ${DESC} || -z ${HOMEPAGE} \
+  || -z ${OWNER_UUID} || -z ${IP} || -z ${NETMASK} || -z ${VLAN_ID} \
+  || -z ${NETWORK_UUID} || -z ${GATEWAY} ]]; then
+  
+  echo "FATAL: All of -i, -n, -d, -u, -o, -p, -m, -g, -v, and -U are required."
+  usage
+  exit 1
+fi
+
+# The manifest for the blank VM, saved as blank.json
+cat << MANIFEST > $BLANK_MANIFEST
+{
+  "brand": "kvm",
+  "alias": "$IMAGE_NAME",
+  "hostname": "$IMAGE_NAME",
+  "autoboot": false,
+  "ram": 4096,
+  "vcpus": 2, 
+  "max_physical_memory": 5120,
+  "quota": 10,
+  "disks": [
+    {
+      "boot": true,
+      "model": "virtio",
+      "size": 10240 
+    }
+  ],
+  "owner_uuid": "$OWNER_UUID",
+  "resolvers": [
+    "8.8.8.8",
+    "8.8.4.4"
+  ],
+  "nics": [
+    {
+      "interface": "net0",
+      "nic_tag": "external",
+      "ip": "$IP",
+      "primary": "true",
+      "netmask": "$NETMASK",
+      "gateway": "$GATEWAY",
+      "vlan_id": $VLAN_ID,
+      "model": "virtio",
+      "network_uuid": "$NETWORK_UUID"
+    }
+  ]
+}
+MANIFEST
+
+function check_for_blank {
+  echo  "==> Checking for existing blank "$IMAGE_NAME" VM."
+  set +e
+  blank=$(pfexec vmadm list | grep $IMAGE_NAME)
+  
+  if [[ $? -eq 0 ]]; then
+    echo "==> Blank VM "$IMAGE_NAME" found:"
+    echo "==> $blank"
+    echo -n "==> Deleting..."
+    blank_uuid=$(echo $blank  | cut -f1 -d ' ')
+    pfexec vmadm delete $blank_uuid
+    echo "done!"
+    echo "==> Sleeping for 5 seconds before we continue."
+    sleep 5
+  else
+    echo "No Blank VM "$IMAGE_NAME" found. It's safe to create a new one."
+  fi
+  set -e
+  echo "==>"
+}
+
+function create_blank {
+  echo -n "==> Creating blank "$IMAGE_NAME" VM and getting VM_UUID..."
+  VM_UUID=$(pfexec vmadm create -f $BLANK_MANIFEST 2>&1 | awk '{print $4;}')
+  echo "done!"
+  echo "==> VM_UUID is ${VM_UUID}"
+  echo "==>"
+}
+
+function copy_iso {
+  echo -n "==> Copying $ISO to /zones/${VM_UUID}/root/..."
+  pfexec cp $ISO /zones/${VM_UUID}/root/
+  echo "done!"
+  echo "==>"
+}
+
+function start_blank {
+  echo "==> Starting ${VM_UUID} with cdrom=/$ISO:"
+  pfexec vmadm start ${VM_UUID} order=cd,once=d cdrom=/$ISO,ide
+  echo "==>"
+}
+
+function get_VNC {
+  echo "==> Getting VNC info for ${VM_UUID}:"
+  host=$(pfexec vmadm info ${VM_UUID} vnc  2>&1 | json -a vnc.host)
+  port=$(pfexec vmadm info ${VM_UUID} vnc  2>&1 | json -a vnc.port)
+  echo "==> Host: $host"
+  echo "==> Port: $port"
+  echo "==>"
+}
+
+function check_state {
+  echo -n "==> Checking state of '$IMAGE_NAME' VM to ensure it's stopped before we proceed..."
+  STATE="running"
+    while [[ $STATE != "stopped" ]]; do
+      STATE=$(pfexec vmadm get ${VM_UUID} | json -a state)
+      echo -n "."
+      sleep 1
+    done
+  echo "ready!" 
+  echo "==> The '$IMAGE_NAME' VM is stopped. Sleping for 15 seconds before we continue."
+  sleep 15 
+  echo "==>"
+}
+
+function snapshot {
+  echo "==> Creating snapshot..."
+  zfs snapshot zones/${VM_UUID}-disk0@dataset-${BUILD_DATE}
+  echo "==> done!"
+  echo "==>"
+}
+
+function create_file {
+  echo "==> Creating image file..."
+  zfs send zones/${VM_UUID}-disk0@dataset-${BUILD_DATE} | gzip -9 > ${IMAGE_NAME}-${BUILD_DATE}.zfs.gz
+  echo "==> done!"
+  echo "==>"
+}
+
+function create_manifest {
+  echo "==> Creating manifest file..."
+  ./sdc-vmmanifest -f ${IMAGE_NAME}-${BUILD_DATE}.zfs.gz -n ${IMAGE_NAME} -s 10240 -v ${BUILD_DATE} -d "$DESC" -h $HOMEPAGE -o linux > ${IMAGE_NAME}-${BUILD_DATE}.json
+  echo "==> done!"
+  echo "==>"
+}
+
+function show_image_files {
+  echo "*** Image creation complete ***"
+  echo "==> Image files:"
+  echo "$(ls | grep $BUILD_DATE)"
+  echo ""
+}
+
+function clean_up {
+  rm -rf blank.json
+}
+
+
+# MAIN
+
+echo "*** Starting image creation process! ***" 
+
+check_for_blank
+create_blank
+copy_iso
+start_blank
+get_VNC
+check_state
+snapshot
+create_file
+create_manifest
+show_image_files
+clean_up
+
+exit 0
