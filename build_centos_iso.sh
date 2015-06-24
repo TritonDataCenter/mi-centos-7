@@ -66,8 +66,12 @@ function create_layout() {
     tar cf - . | tar xpf - -C $DVD_LAYOUT
     popd > /dev/null 2>&1
     umount $MOUNT_POINT
-    echo "Copying custom RPMS"
-    find $CUSTOM_RPMS -type f -exec cp {} $DVD_LAYOUT/Packages \;
+    
+    if [ -d $CUSTOM_RPMS ]; then
+        echo "Copying custom RPMS"
+        find $CUSTOM_RPMS -type f -exec cp {} $DVD_LAYOUT/Packages \;
+    fi
+    
     echo "Finished Populating Layout"
 }
 
