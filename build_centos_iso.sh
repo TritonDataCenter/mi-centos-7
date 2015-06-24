@@ -5,7 +5,7 @@ IFS=$'\n\t'
 
 CUR_TIME=`date +%FT%TZ`
 CUSTOM_RPMS=./RPMS
-DVD_LAYOUT=centos-7-iso-layout
+DVD_LAYOUT=./centos-7-iso-layout
 DVD_TITLE='CentOS-7-Joyent'
 ISO=CentOS-7-x86_64-Minimal.iso
 ISO_DIR=/data/fetched-iso
