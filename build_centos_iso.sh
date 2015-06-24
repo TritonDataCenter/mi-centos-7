@@ -11,6 +11,7 @@ ISO=CentOS-7-x86_64-Minimal.iso
 ISO_DIR=/data/fetched-iso
 ISO_FILENAME=./centos-7-joyent.iso
 KS_CFG=./ks.cfg
+GUESTTOOLS=sdc-vmtools
 MIRROR=http://buildlogs.centos.org/rolling/7/isos/x86_64
 MOUNT_POINT=/mnt/centos7
 
@@ -81,8 +82,11 @@ function copy_ks_cfg() {
 }
 
 function copy_guest_tools() {
-    echo "Copying sdc-vmtools"
-    cp -R ./sdc-vmtools/ $DVD_LAYOUT/ 
+    echo "Copying $GUESTTOOLS"
+    echo "Initiallizing and fetching submodule $GUESTTOOLS"
+    git submodule init
+    git submodule update
+    cp -R ./$GUESTTOOLS/ $DVD_LAYOUT/ 
 }
 
 

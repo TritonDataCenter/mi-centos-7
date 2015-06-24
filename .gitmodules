@@ -1,0 +1,3 @@
+[submodule "sdc-vmtools"]
+    path = sdc-vmtools
+    url = https://github.com/joyent/sdc-vmtools.git 
