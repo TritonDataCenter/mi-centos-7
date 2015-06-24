@@ -18,7 +18,7 @@ script will install the necessary packages required to create a custom ISO.
 
 ## Using
 
-The next script is `build_centos_iso.sh` which takes a series of commands:
+The next script is `create_iso` which takes a series of commands:
 
  * fetch
  * layout
@@ -39,14 +39,12 @@ creates the ISO in `./iso`.
 
 You can run each command separately or all together.
 
-```
-./build_centos_iso.sh fetch
-#create RPMs
-./build_centos_iso.sh layout
-./build_centos_iso.sh finish
-```
+    ./create_iso fetch
+    # create RPMs
+    ./create_iso layout
+    ./create_iso finish
 
-Or `./build_centos_iso.sh fetch layout finish`.
+Or `./create_iso fetch layout finish`.
 
 The resulting ISO will be ready to boot and install a clean image ready for
 SmartOS and the Joyent Public Cloud.
