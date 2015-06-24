@@ -1,0 +1,144 @@
+#!/bin/bash
+#
+# Copyright (c) 2011 Joyent Inc., All rights reserved.
+#
+
+set -o errexit
+
+#now=$(date -u +%Y-%m-%dT%H:%MZ)
+now=$(date -u +%Y-%m-%dT%TZ)
+vm_uuid=$(uuid)
+SUM=/usr/bin/sum
+
+function usage
+{
+    cat <<USAGE
+Usage: $0 -f filename -n <name> -s <size> -v <version> [options]
+
+    -d <image description> (optional, default: "<NAME> <VERSION> VM Image")
+    -D <disk driver> (optional, default: "virtio")
+    -f <filename of VM image> (required)
+    -n <name of VM image> (required)
+    -N <NIC driver> (optional, default: "virtio")
+    -o <OS name> (optional, default: argument to -n)
+    -s <size of virtual disk (as seen by VM, MiB)> (required)
+    -v <version of VM image> (required)
+    -h <homepage link> (optional)
+
+Example:
+
+    $0 -f ubuntu-10.04.2.img.gz -s 5120 -n ubuntu -v 10.04.2
+
+USAGE
+    exit 1
+}
+
+while getopts d:D:f:n:N:o:s:v:h:? c; do
+    case ${c} in
+    d)
+        description=${OPTARG}
+        ;;
+    D)
+        disk_driver=${OPTARG}
+        ;;
+    f)
+        filename=${OPTARG}
+        ;;
+    n)
+        name=${OPTARG}
+        ;;
+    N)
+        nic_driver=${OPTARG}
+        ;;
+    o)
+        os=${OPTARG}
+        ;;
+    s)
+        image_size=${OPTARG}
+        ;;
+    v)
+        version=${OPTARG}
+        ;;
+    h)
+        homepage=${OPTARG}
+        ;;
+    \?)
+        usage
+        ;;
+    esac
+done
+
+if [[ -z ${filename} || -z ${name} || -z ${version} || -z ${image_size} ]]; then
+    echo "FATAL: All of -f, -n, -s and -v are required."
+    usage
+fi
+
+if [[ -z ${description} ]]; then
+    description="${name} ${version} VM image"
+fi
+
+if [[ -z ${os} ]]; then
+    os=other
+fi
+
+if [[ -z ${homepage} ]]; then
+    homepage=http://wiki.joyent.com/
+fi
+
+if [[ ! -f ${filename} ]]; then
+    echo "FATAL: ${filename} does not exist."
+    usage
+fi
+
+if [[ -z ${disk_driver} ]]; then
+    disk_driver="virtio"
+fi
+
+if [[ -z ${nic_driver} ]]; then
+    nic_driver="virtio"
+fi
+
+shasum=$($SUM -x sha1 ${filename} | cut -d' ' -f1)
+filesize=$(ls -l ${filename} | awk '{ print $5 }')
+
+cat <<EOF
+{
+  "v": "2",
+  "name": "${name}",
+  "version": "${version}",
+  "type": "zvol",
+  "cpu_type": "host",
+  "description": "${description}",
+  "homepage": "${homepage}",
+  "published_at": "${now}",
+  "os": "${os}",
+  "image_size": "${image_size}",
+  "files": [
+    {
+      "sha1": "${shasum}",
+      "size": ${filesize},
+      "compression": "gzip"
+    }
+  ],
+  "requirements": {
+    "networks": [
+      {
+        "name": "net0",
+        "description": "public"
+      }
+    ],
+    "ssh_key": true
+  },
+  "disk_driver": "virtio",
+  "nic_driver": "virtio",
+  "uuid": "${vm_uuid}",
+  "public": false,
+  "owner": "00000000-0000-0000-0000-000000000000",
+  "users": [{"name": "root"}],
+   "tags": {
+    "role": "os"
+  },
+  "urn": "sdc:sdc:${name}:${version}"
+}
+EOF
+
