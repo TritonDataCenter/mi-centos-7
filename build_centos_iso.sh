@@ -5,7 +5,7 @@ IFS=$'\n\t'
 
 CUR_TIME=`date +%FT%TZ`
 CUSTOM_RPMS=./RPMS
-DVD_LAYOUT=./centos-7-iso-layout
+DVD_LAYOUT=centos-7-iso-layout
 DVD_TITLE='CentOS-7-Joyent'
 ISO=CentOS-7-x86_64-Minimal.iso
 ISO_DIR=/data/fetched-iso
@@ -64,7 +64,7 @@ function create_layout() {
     mount $ISO_DIR/$ISO $MOUNT_POINT -o loop
     pushd $MOUNT_POINT > /dev/null 2>&1
     echo "Populating Layout"
-    tar cf - . | tar xpf - -C $DVD_LAYOUT
+    tar cf - . | tar xpf - -C $PWD/$DVD_LAYOUT
     popd > /dev/null 2>&1
     umount $MOUNT_POINT
     
