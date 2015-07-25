@@ -32,14 +32,14 @@ function fetch_iso() {
     
     echo "Checking to see if we have the latest $ISO:"
     echo "  Getting signed checksum (sha256sum.txt.asc)"
-    curl -s -O $MIRROR/sha256sum.txt.asc
+    curl -s -o $ISO_DIR/sha256sum.txt.asc $MIRROR/sha256sum.txt.asc
     
     ISO_NAME=$(echo $ISO | cut -f1 -d'.')
     
     echo "  Verifying signed checksum sha256sum.txt.asc"
-    gpg --verify sha256sum.txt.asc
+    gpg --verify $ISO_DIR/sha256sum.txt.asc
     
-    CHECKSUM=$(grep $ISO_NAME sha256sum.txt.asc | cut -f1 -d' ')
+    CHECKSUM=$(grep $ISO_NAME $ISO_DIR/sha256sum.txt.asc | cut -f1 -d' ')
     
     if [[ $(sha256sum $ISO_DIR/$ISO | cut -f1 -d' ') == "$CHECKSUM" ]]; then
         echo "  Checksums match, using local copy of $ISO"
@@ -48,7 +48,10 @@ function fetch_iso() {
         curl -s -o $ISO_DIR/$ISO $MIRROR/$ISO
         
         echo "  Verifying sha256 of $ISO"
+        pushd $PWD
+        cd $ISO_DIR
         grep "$ISO\$" sha256sum.txt.asc | sha256sum -c -
+        popd
     fi
 }
 
