@@ -36,7 +36,7 @@ function fetch_iso() {
     
     ISO_NAME=$(echo $ISO | cut -f1 -d'.')
     
-    echo "Verifying signed checksum sha256sum.txt.asc"
+    echo "  Verifying signed checksum sha256sum.txt.asc"
     gpg --verify sha256sum.txt.asc
     
     CHECKSUM=$(grep $ISO_NAME sha256sum.txt.asc | cut -f1 -d' ')
@@ -47,7 +47,7 @@ function fetch_iso() {
         echo "  Checksums do not match. Fetching latest $ISO"
         curl -s -o $ISO_DIR/$ISO $MIRROR/$ISO
         
-        echo " verifying sha256 of $ISO"
+        echo "  Verifying sha256 of $ISO"
         grep "$ISO\$" sha256sum.txt.asc | sha256sum -c -
     fi
 }
