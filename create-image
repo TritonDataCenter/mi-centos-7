@@ -113,7 +113,7 @@ cat << MANIFEST > $BLANK_MANIFEST
   "autoboot": false,
   "ram": 2048,
   "vcpus": 1, 
-  "max_physical_memory": 3072,
+  "max_physical_memory": 4096,
   "quota": 10,
   "disks": [
     {
