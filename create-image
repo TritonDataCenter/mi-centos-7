@@ -238,6 +238,8 @@ function show_image_files {
 
 function clean_up {
   rm -rf blank.json
+  echo "==> Deleting blank $IMAGE_NAME VM: ${VM_UUID}"
+  pfexec vmadm delete ${VM_UUID}
 }
 
 
