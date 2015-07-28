@@ -111,9 +111,9 @@ cat << MANIFEST > $BLANK_MANIFEST
   "alias": "$IMAGE_NAME",
   "hostname": "$IMAGE_NAME",
   "autoboot": false,
-  "ram": 2048,
+  "ram": 1024,
   "vcpus": 1, 
-  "max_physical_memory": 4096,
+  "max_physical_memory": 2048,
   "quota": 10,
   "disks": [
     {
