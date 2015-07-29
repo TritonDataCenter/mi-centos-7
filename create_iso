@@ -25,7 +25,7 @@ function fetch_iso() {
         curl -s -o $ISO_DIR/$ISO $MIRROR/$ISO
     fi
     
-    # Check if we already imported the key    
+    # Check if we already imported the key
     #
     # pub  4096R/F4A80EB5 2014-06-23 CentOS-7 Key (CentOS 7 Official Signing Key) <security@centos.org>
     #     Key fingerprint = 6341 AB27 53D7 8A78 A7C2  7BB1 24C6 A8A7 F4A8 0EB5
