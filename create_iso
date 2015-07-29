@@ -25,10 +25,17 @@ function fetch_iso() {
         curl -s -o $ISO_DIR/$ISO $MIRROR/$ISO
     fi
     
-    echo "Adding gpg signing keys"
+    # Check if we already imported the key    
+    #
     # pub  4096R/F4A80EB5 2014-06-23 CentOS-7 Key (CentOS 7 Official Signing Key) <security@centos.org>
     #     Key fingerprint = 6341 AB27 53D7 8A78 A7C2  7BB1 24C6 A8A7 F4A8 0EB5
-    gpg --keyserver pool.sks-keyservers.net --recv-keys 6341AB2753D78A78A7C27BB124C6A8A7F4A80EB5
+    set +e 
+    gpg --list-keys | grep 4096R/F4A80EB5 > /dev/null
+    if [[ $? -gt 0 ]]; then
+        echo "Adding gpg signing keys"
+        gpg --keyserver pool.sks-keyservers.net --recv-keys 6341AB2753D78A78A7C27BB124C6A8A7F4A80EB5
+    fi
+    set -e
     
     echo "Checking to see if we have the latest $ISO:"
     echo "  Getting signed checksum (sha256sum.txt.asc)"
