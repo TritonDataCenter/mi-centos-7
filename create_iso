@@ -132,7 +132,6 @@ function create_newiso() {
     modify_boot_menu
     echo "Preparing NEW ISO"
     pushd $DVD_LAYOUT > /dev/null 2>&1
-    discinfo=`head -1 .discinfo`
     createrepo -g repodata/comps.xml $DVD_LAYOUT
     echo "Creating NEW ISO"
     mkisofs -r -R -J -T -v \
