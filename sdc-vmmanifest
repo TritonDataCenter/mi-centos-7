@@ -137,8 +137,7 @@ cat <<EOF
   "users": [{"name": "root"}],
    "tags": {
     "role": "os"
-  },
-  "urn": "sdc:sdc:${name}:${version}"
+  }
 }
 EOF
 
