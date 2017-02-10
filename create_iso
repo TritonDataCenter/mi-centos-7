@@ -39,7 +39,7 @@ function fetch_iso() {
     
     echo "Checking to see if we have the latest $ISO:"
     echo "  Getting signed checksum (sha256sum.txt.asc)"
-    curl -s -o $ISO_DIR/sha256sum.txt.asc $MIRROR/sha256sum.txt.asc
+    curl -L -s -o $ISO_DIR/sha256sum.txt.asc $MIRROR/sha256sum.txt.asc
     
     ISO_NAME=$(echo $ISO | cut -f1 -d'.')
     
