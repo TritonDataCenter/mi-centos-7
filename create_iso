@@ -73,7 +73,7 @@ function create_layout() {
 
     # Check if $MOUNT_POINT is already mounted
     # This may happen if a previous build failed
-    if [ $(grep $MOUNT_POINT /proc/mounts) ]; then
+    if grep -q "$MOUNT_POINT" /proc/mounts; then
       echo "Unmounting $MOUNT_POINT from previous build..."
         umount $MOUNT_POINT
     fi
