@@ -144,12 +144,12 @@ cat << MANIFEST > $BLANK_MANIFEST
 MANIFEST
 
 function check_for_blank {
-  echo  "==> Checking for existing blank "$IMAGE_NAME" VM."
+  echo  "==> Checking for existing blank $IMAGE_NAME VM."
   set +e
   blank=$(pfexec vmadm list | grep $IMAGE_NAME)
   
   if [[ $? -eq 0 ]]; then
-    echo "==> Blank VM "$IMAGE_NAME" found:"
+    echo "==> Blank VM $IMAGE_NAME found:"
     echo "==> $blank"
     echo -n "==> Deleting..."
     blank_uuid=$(echo $blank  | cut -f1 -d ' ')
@@ -158,14 +158,14 @@ function check_for_blank {
     echo "==> Sleeping for 5 seconds before we continue."
     sleep 5
   else
-    echo "No Blank VM "$IMAGE_NAME" found. It's safe to create a new one."
+    echo "No Blank VM $IMAGE_NAME found. It's safe to create a new one."
   fi
   set -e
   echo "==>"
 }
 
 function create_blank {
-  echo -n "==> Creating blank "$IMAGE_NAME" VM and getting VM_UUID..."
+  echo -n "==> Creating blank $IMAGE_NAME VM and getting VM_UUID..."
   VM_UUID=$(pfexec vmadm create -f $BLANK_MANIFEST 2>&1 | awk '{print $4;}')
   echo "done!"
   echo "==> VM_UUID is ${VM_UUID}"
