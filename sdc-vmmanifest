@@ -99,7 +99,7 @@ if [[ -z ${nic_driver} ]]; then
 fi
 
 shasum=$($SUM -x sha1 ${filename} | cut -d' ' -f1)
-filesize=$(ls -l ${filename} | awk '{ print $5 }')
+filesize=$(wc -c < ${filename})
 
 cat <<EOF
 {
