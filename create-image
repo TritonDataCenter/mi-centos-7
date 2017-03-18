@@ -143,7 +143,7 @@ cat << MANIFEST > $BLANK_MANIFEST
 }
 MANIFEST
 
-function check_for_blank {
+check_for_blank() {
   echo  "==> Checking for existing blank $IMAGE_NAME VM."
   set +e
   blank=$(pfexec vmadm list | grep $IMAGE_NAME)
@@ -164,7 +164,7 @@ function check_for_blank {
   echo "==>"
 }
 
-function create_blank {
+create_blank() {
   echo -n "==> Creating blank $IMAGE_NAME VM and getting VM_UUID..."
   VM_UUID=$(pfexec vmadm create -f $BLANK_MANIFEST 2>&1 | awk '{print $4;}')
   echo "done!"
@@ -172,20 +172,20 @@ function create_blank {
   echo "==>"
 }
 
-function copy_iso {
+copy_iso() {
   echo -n "==> Copying $ISO to /zones/${VM_UUID}/root/..."
   pfexec cp $ISO /zones/${VM_UUID}/root/
   echo "done!"
   echo "==>"
 }
 
-function start_blank {
+start_blank() {
   echo "==> Starting ${VM_UUID} with cdrom=/$ISO:"
   pfexec vmadm start ${VM_UUID} order=cd,once=d cdrom=/$ISO,ide
   echo "==>"
 }
 
-function get_VNC {
+get_VNC() {
   echo "==> Getting VNC info for ${VM_UUID}:"
   host=$(pfexec vmadm info ${VM_UUID} vnc  2>&1 | json -a vnc.host)
   port=$(pfexec vmadm info ${VM_UUID} vnc  2>&1 | json -a vnc.port)
@@ -194,7 +194,7 @@ function get_VNC {
   echo "==>"
 }
 
-function check_state {
+check_state() {
   echo -n "==> Checking state of '$IMAGE_NAME' VM to ensure it's stopped before we proceed..."
   STATE="running"
     while [[ $STATE != "stopped" ]]; do
@@ -208,28 +208,28 @@ function check_state {
   echo "==>"
 }
 
-function snapshot {
+snapshot() {
   echo "==> Creating snapshot..."
   zfs snapshot zones/${VM_UUID}-disk0@dataset-${BUILD_DATE}
   echo "==> done!"
   echo "==>"
 }
 
-function create_file {
+create_file() {
   echo "==> Creating image file..."
   zfs send zones/${VM_UUID}-disk0@dataset-${BUILD_DATE} | gzip -9 > ${IMAGE_NAME}-${BUILD_DATE}.zfs.gz
   echo "==> done!"
   echo "==>"
 }
 
-function create_manifest {
+create_manifest() {
   echo "==> Creating manifest file..."
   ./sdc-vmmanifest -f ${IMAGE_NAME}-${BUILD_DATE}.zfs.gz -n ${IMAGE_NAME} -s 10240 -v ${BUILD_DATE} -d "$DESC" -h $HOMEPAGE -o linux > ${IMAGE_NAME}-${BUILD_DATE}.json
   echo "==> done!"
   echo "==>"
 }
 
-function show_image_files {
+show_image_files() {
   echo "*** Image creation complete ***"
   echo "==> Image files:"
   echo "${IMAGE_NAME}-${BUILD_DATE}.json"
@@ -237,7 +237,7 @@ function show_image_files {
   echo ""
 }
 
-function clean_up {
+clean_up() {
   rm -rf blank.json
   echo "==> Deleting blank $IMAGE_NAME VM: ${VM_UUID}"
   pfexec vmadm delete ${VM_UUID}

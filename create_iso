@@ -15,7 +15,7 @@ GUESTTOOLS=sdc-vmtools
 MIRROR=https://buildlogs.centos.org/rolling/7/isos/x86_64
 MOUNT_POINT=/mnt/centos7
 
-function fetch_iso() {
+fetch_iso() {
     if [[ ! -d $ISO_DIR ]]; then
         mkdir -p $ISO_DIR
     fi
@@ -62,7 +62,7 @@ function fetch_iso() {
     fi
 }
 
-function create_layout() {
+create_layout() {
     echo "Creating ISO Layout"
     if [[ -d $DVD_LAYOUT ]]; then
         echo "Layout $DVD_LAYOUT exists...nuking"
@@ -98,12 +98,12 @@ function create_layout() {
     echo "Finished Populating Layout"
 }
 
-function copy_ks_cfg() {
+copy_ks_cfg() {
     echo "Copying Kickstart file"
     cp $KS_CFG $DVD_LAYOUT/
 }
 
-function copy_guest_tools() {
+copy_guest_tools() {
     echo "Copying $GUESTTOOLS"
     echo "Initiallizing and fetching submodule $GUESTTOOLS"
     git submodule init
@@ -112,12 +112,12 @@ function copy_guest_tools() {
 }
 
 
-function modify_boot_menu() {
+modify_boot_menu() {
     echo "Modifying grub boot menu"
     cp ./isolinux.cfg $DVD_LAYOUT/isolinux/
 }
 
-function cleanup_layout() {
+cleanup_layout() {
     echo "Cleaning up $DVD_LAYOUT"
     find $DVD_LAYOUT -name TRANS.TBL -exec rm '{}' +
     COMPS_XML=$(find $DVD_LAYOUT/repodata -name '*-minimal-x86_64-comps.xml' ! -name 'repomd.xml' -exec basename {} \;)
@@ -125,7 +125,7 @@ function cleanup_layout() {
     find $DVD_LAYOUT/repodata -type f ! -name 'comps.xml' -exec rm '{}' +
 }
 
-function create_newiso() {
+create_newiso() {
     copy_guest_tools
     cleanup_layout
     copy_ks_cfg
@@ -149,8 +149,7 @@ function create_newiso() {
 
 # main line
 
-usage()
-{
+usage() {
     cat <<EOF
 Usage:
         $0 [options] command [command]

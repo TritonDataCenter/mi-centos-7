@@ -10,8 +10,7 @@ now=$(date -u +%Y-%m-%dT%TZ)
 vm_uuid=$(uuid)
 SUM=/usr/bin/sum
 
-function usage
-{
+usage() {
     cat <<USAGE
 Usage: $0 -f filename -n <name> -s <size> -v <version> [options]
 
