@@ -3,7 +3,7 @@
 set -euo pipefail
 IFS=$'\n\t'
 
-CUR_TIME=`date +%FT%TZ`
+CUR_TIME=$(date +%FT%TZ)
 CUSTOM_RPMS=./RPMS
 DVD_LAYOUT=/data/centos-7-iso-layout
 DVD_TITLE='CentOS-7-Joyent'
@@ -166,7 +166,7 @@ EOF
     exit 1
 }
 
-args=`getopt -o h -n 'build_centos_iso.sh' -- "$@"`
+args=$(getopt -o h -n 'build_centos_iso.sh' -- "$@")
 
 if [[ $# == 0 ]]; then
     usage;
