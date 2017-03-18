@@ -16,11 +16,11 @@ MIRROR=https://buildlogs.centos.org/rolling/7/isos/x86_64
 MOUNT_POINT=/mnt/centos7
 
 function fetch_iso() {
-    if [ ! -d $ISO_DIR ]; then
+    if [[ ! -d $ISO_DIR ]]; then
         mkdir -p $ISO_DIR
     fi
     
-    if [ ! -e $ISO_DIR/$ISO ]; then
+    if [[ ! -e $ISO_DIR/$ISO ]]; then
         echo "No local copy of $ISO. Fetching latest $ISO"
         curl -s -o $ISO_DIR/$ISO $MIRROR/$ISO
     fi
@@ -64,7 +64,7 @@ function fetch_iso() {
 
 function create_layout() {
     echo "Creating ISO Layout"
-    if [ -d $DVD_LAYOUT ]; then
+    if [[ -d $DVD_LAYOUT ]]; then
         echo "Layout $DVD_LAYOUT exists...nuking"
         rm -rf $DVD_LAYOUT
     fi
@@ -79,7 +79,7 @@ function create_layout() {
     fi
 
     echo "Mounting $ISO to $MOUNT_POINT"
-    if [ ! -d $MOUNT_POINT ]; then
+    if [[ ! -d $MOUNT_POINT ]]; then
         echo "Creating $MOUNT_POINT..."
         mkdir $MOUNT_POINT
     fi
@@ -90,7 +90,7 @@ function create_layout() {
     popd > /dev/null 2>&1
     umount $MOUNT_POINT
     
-    if [ -d $CUSTOM_RPMS ]; then
+    if [[ -d $CUSTOM_RPMS ]]; then
         echo "Copying custom RPMS"
         find $CUSTOM_RPMS -type f -exec cp {} $DVD_LAYOUT/Packages \;
     fi
@@ -185,13 +185,13 @@ while true ; do
 done
 
 for arg ; do
-    if [ $arg = 'fetch' ] ; then
+    if [[ $arg = 'fetch' ]] ; then
         fetch_iso
     fi
-    if [ $arg = 'layout' ] ; then
+    if [[ $arg = 'layout' ]] ; then
         create_layout
     fi
-    if [ $arg = 'finish' ] ; then
+    if [[ $arg = 'finish' ]] ; then
         create_newiso
     fi
 done
