@@ -3,15 +3,13 @@
 # Copyright (c) 2015 Joyent Inc., All rights reserved.
 #
 
-set -euo pipefail
-IFS=$'\n\t'
-
-TRACE=
-
 if [[ -n "$TRACE" ]]; then
   export PS4='[\D{%FT%TZ}] ${BASH_SOURCE}:${LINENO}: ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
   set -o xtrace
 fi
+
+set -euo pipefail
+IFS=$'\n\t'
 
 ISO=
 IMAGE_NAME=
@@ -40,7 +38,7 @@ Usage:
 
 Example:
   $0 -i custom.iso -n centos-7 -d "CentOS 7 64-bit image with just essential packages installed. Ideal for users who are comfortable with setting up their own environment and tools." -u https://docs.joyent.com/images/linux/centos -o 00000000-0000-0000-0000-000000000000 -p 192.0.2.21 -m <NETMASK> -g <GATEWAY>  -v <VLAN_ID> -U <NETWORK_UUID>
-    
+
 OPTIONS:
   -i The ISO
   -n The name of the image as it would appear in the manifest
@@ -104,7 +102,7 @@ done
 if [[ -z ${ISO} || -z ${IMAGE_NAME} || -z ${DESC} || -z ${HOMEPAGE} \
   || -z ${OWNER_UUID} || -z ${IP} || -z ${NETMASK} || -z ${VLAN_ID} \
   || -z ${NETWORK_UUID} || -z ${GATEWAY} ]]; then
-  
+
   echo "FATAL: All of -i, -n, -d, -u, -o, -p, -m, -g, -v, and -U are required."
   usage
   exit 1
@@ -128,7 +126,7 @@ cat << MANIFEST > $BLANK_MANIFEST
     {
       "boot": true,
       "model": "virtio",
-      "size": 10240 
+      "size": 10240
     }
   ],
   "owner_uuid": "$OWNER_UUID",
@@ -156,7 +154,7 @@ check_for_blank() {
   echo  "==> Checking for existing blank $IMAGE_NAME VM."
   set +e
   blank=$(pfexec vmadm list | grep $IMAGE_NAME)
-  
+
   if [[ $? -eq 0 ]]; then
     echo "==> Blank VM $IMAGE_NAME found:"
     echo "==> $blank"
@@ -211,9 +209,9 @@ check_state() {
       echo -n "."
       sleep 1
     done
-  echo "ready!" 
+  echo "ready!"
   echo "==> The '$IMAGE_NAME' VM is stopped. Sleping for 15 seconds before we continue."
-  sleep 15 
+  sleep 15
   echo "==>"
 }
 
@@ -255,7 +253,7 @@ clean_up() {
 
 # MAIN
 
-echo "*** Starting image creation process! ***" 
+echo "*** Starting image creation process! ***"
 
 check_for_blank
 create_blank

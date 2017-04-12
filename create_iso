@@ -1,14 +1,12 @@
 #!/usr/bin/env bash
 
-set -euo pipefail
-IFS=$'\n\t'
-
-TRACE=
-
 if [[ -n "$TRACE" ]]; then
   export PS4='[\D{%FT%TZ}] ${BASH_SOURCE}:${LINENO}: ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
   set -o xtrace
 fi
+
+set -euo pipefail
+IFS=$'\n\t'
 
 CUR_TIME=$(date +%FT%TZ)
 CUSTOM_RPMS=./RPMS
@@ -26,41 +24,41 @@ fetch_iso() {
     if [[ ! -d $ISO_DIR ]]; then
         mkdir -p $ISO_DIR
     fi
-    
+
     if [[ ! -e $ISO_DIR/$ISO ]]; then
         echo "No local copy of $ISO. Fetching latest $ISO"
         curl -s -o $ISO_DIR/$ISO $MIRROR/$ISO
     fi
-    
+
     # Check if we already imported the key
     #
     # pub  4096R/F4A80EB5 2014-06-23 CentOS-7 Key (CentOS 7 Official Signing Key) <security@centos.org>
     #     Key fingerprint = 6341 AB27 53D7 8A78 A7C2  7BB1 24C6 A8A7 F4A8 0EB5
-    set +e 
+    set +e
     gpg --list-keys | grep 4096R/F4A80EB5 > /dev/null
     if [[ $? -gt 0 ]]; then
         echo "Adding gpg signing keys"
         gpg --keyserver pool.sks-keyservers.net --recv-keys 6341AB2753D78A78A7C27BB124C6A8A7F4A80EB5
     fi
     set -e
-    
+
     echo "Checking to see if we have the latest $ISO:"
     echo "  Getting signed checksum (sha256sum.txt.asc)"
     curl -L -s -o $ISO_DIR/sha256sum.txt.asc $MIRROR/sha256sum.txt.asc
-    
+
     ISO_NAME=$(echo $ISO | cut -f1 -d'.')
-    
+
     echo "  Verifying signed checksum sha256sum.txt.asc"
     gpg --verify $ISO_DIR/sha256sum.txt.asc
-    
+
     CHECKSUM=$(grep $ISO_NAME $ISO_DIR/sha256sum.txt.asc | cut -f1 -d' ')
-    
+
     if [[ $(sha256sum $ISO_DIR/$ISO | cut -f1 -d' ') == "$CHECKSUM" ]]; then
         echo "  Checksums match, using local copy of $ISO"
     else
         echo "  Checksums do not match. Fetching latest $ISO"
         curl -s -o $ISO_DIR/$ISO $MIRROR/$ISO
-        
+
         echo "  Verifying sha256 of $ISO"
         pushd $PWD
         cd $ISO_DIR
@@ -96,12 +94,12 @@ create_layout() {
     tar cf - . | tar xpf - -C $DVD_LAYOUT
     popd > /dev/null 2>&1
     umount $MOUNT_POINT
-    
+
     if [[ -d $CUSTOM_RPMS ]]; then
         echo "Copying custom RPMS"
         find $CUSTOM_RPMS -type f -exec cp {} $DVD_LAYOUT/Packages \;
     fi
-    
+
     echo "Finished Populating Layout"
 }
 
@@ -115,7 +113,7 @@ copy_guest_tools() {
     echo "Initiallizing and fetching submodule $GUESTTOOLS"
     git submodule init
     git submodule update
-    cp -R ./$GUESTTOOLS/ $DVD_LAYOUT/ 
+    cp -R ./$GUESTTOOLS/ $DVD_LAYOUT/
 }
 
 
@@ -128,7 +126,7 @@ cleanup_layout() {
     echo "Cleaning up $DVD_LAYOUT"
     find $DVD_LAYOUT -name TRANS.TBL -exec rm '{}' +
     COMPS_XML=$(find $DVD_LAYOUT/repodata -name '*-minimal-x86_64-comps.xml' ! -name 'repomd.xml' -exec basename {} \;)
-    mv $DVD_LAYOUT/repodata/$COMPS_XML $DVD_LAYOUT/repodata/comps.xml 
+    mv $DVD_LAYOUT/repodata/$COMPS_XML $DVD_LAYOUT/repodata/comps.xml
     find $DVD_LAYOUT/repodata -type f ! -name 'comps.xml' -exec rm '{}' +
 }
 
