@@ -43,7 +43,7 @@ fetch_iso() {
         curl -s -o $ISO_DIR/$ISO $MIRROR/$ISO
     fi
 
-    if [[ -n "$GPGKEY" ]]; then
+    if [[ -n "$GPG_KEY" ]]; then
         # Check if we already imported the key
         set +e
         gpg --export -a -o /dev/null $GPG_KEY 2>/dev/null
