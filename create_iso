@@ -107,7 +107,7 @@ create_layout() {
     popd > /dev/null 2>&1
     umount $MOUNT_POINT
 
-    for d in $CUSTOM_PRMS; do
+    for d in $CUSTOM_RPMS; do
         if [[ -d $d ]]; then
             echo "Copying custom RPMS from: $d"
             find $d -type f -exec cp {} $DVD_LAYOUT/Packages \;
