@@ -75,3 +75,28 @@ is from [https://github.com/joyent/me-centos](https://github.com/joyent/me-cento
    * vim-enhanced
    * vim-minimal
    * wget
+
+## Customization
+
+Most behavior of this script can be customized by creating a local
+configuration file called `create_iso.conf`. If present, this config can
+be used to override any of the parameters in the following table.
+
+| Parameter       | Description                                              |
+| --------------- | -------------------------------------------------------- |
+| `DVD_SUBTITLE`  | ISO subtitle, defaults to current date                   |
+| `CUSTOM_RPMS`   | Paths to search for extra rpms                           |
+| `DVD_LAYOUT`    | Work directory to use for ISO layout                     |
+| `DVD_TITLE`     | ISO title                                                |
+| `ISO`           | Upstream (source) ISO filename                           |
+| `ISO_DIR`       | Path to find/store the upstream (source) ISO file        |
+| `ISO_FILENAME`  | Output (generated) ISO filename (and path)               |
+| `KS_CFG`        | Kickstart configuration file                             |
+| `ISOLINUX_CFG`  | ISOLINUX menu / configuration file                       |
+| `GUESTTOOLS`    | Path to sdc-vmtools, set to empty string to skip         |
+| `MIRROR`        | Base URL for upstream (source) ISO                       |
+| `MOUNT_POINT`   | Temporary mount point for mounting upstream (source) ISO |
+| `GPG_KEY`       | GPG key fingerprint for upstream verification, or empty  |
+| `CHECKSUM`      | If not using GPG key, SHA256 checksum of upstream ISO    |
+| `PREPARER`      | Name of preparer, for ISO metadata                       |
+| `EXTRA_DIRS`    | Extra directories to be copied to final ISO              |

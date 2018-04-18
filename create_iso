@@ -8,7 +8,8 @@ fi
 set -euo pipefail
 IFS=$'\n\t'
 
-CUR_TIME=$(date +%FT%TZ)
+# set default configuration
+DVD_SUBTITLE=$(date +%FT%TZ)
 CUSTOM_RPMS=./RPMS
 DVD_LAYOUT=/data/centos-7-iso-layout
 DVD_TITLE='CentOS-7-Joyent'
@@ -16,9 +17,21 @@ ISO=CentOS-7-x86_64-Minimal-1511.iso
 ISO_DIR=/data/fetched-iso
 ISO_FILENAME=./centos-7-joyent.iso
 KS_CFG=./ks.cfg
+ISOLINUX_CFG=./isolinux.cfg
 GUESTTOOLS=sdc-vmtools
 MIRROR=https://buildlogs.centos.org/rolling/7/isos/x86_64
 MOUNT_POINT=/mnt/centos7
+# pub  4096R/F4A80EB5 2014-06-23 CentOS-7 Key (CentOS 7 Official Signing Key) <security@centos.org>
+#     Key fingerprint = 6341 AB27 53D7 8A78 A7C2  7BB1 24C6 A8A7 F4A8 0EB5
+GPG_KEY=6341AB2753D78A78A7C27BB124C6A8A7F4A80EB5
+CHECKSUM=skip
+PREPARER=Joyent
+EXTRA_DIRS=""
+
+# load local configuration
+if [[ -e create_iso.conf ]]; then
+  . create_iso.conf
+fi
 
 fetch_iso() {
     if [[ ! -d $ISO_DIR ]]; then
@@ -30,28 +43,27 @@ fetch_iso() {
         curl -s -o $ISO_DIR/$ISO $MIRROR/$ISO
     fi
 
-    # Check if we already imported the key
-    #
-    # pub  4096R/F4A80EB5 2014-06-23 CentOS-7 Key (CentOS 7 Official Signing Key) <security@centos.org>
-    #     Key fingerprint = 6341 AB27 53D7 8A78 A7C2  7BB1 24C6 A8A7 F4A8 0EB5
-    set +e
-    gpg --list-keys | grep 4096R/F4A80EB5 > /dev/null
-    if [[ $? -gt 0 ]]; then
-        echo "Adding gpg signing keys"
-        gpg --keyserver pool.sks-keyservers.net --recv-keys 6341AB2753D78A78A7C27BB124C6A8A7F4A80EB5
+    if [[ -n "$GPG_KEY" ]]; then
+        # Check if we already imported the key
+        set +e
+        gpg --export -a -o /dev/null $GPG_KEY 2>/dev/null
+        if [[ $? -gt 0 ]]; then
+            echo "Adding gpg signing keys"
+            gpg --keyserver pool.sks-keyservers.net --recv-keys $GPG_KEY
+        fi
+        set -e
+
+        echo "Checking to see if we have the latest $ISO:"
+        echo "  Getting signed checksum (sha256sum.txt.asc)"
+        curl -L -s -o $ISO_DIR/sha256sum.txt.asc $MIRROR/sha256sum.txt.asc
+
+        ISO_NAME=$(echo $ISO | cut -f1 -d'.')
+
+        echo "  Verifying signed checksum sha256sum.txt.asc"
+        gpg --verify $ISO_DIR/sha256sum.txt.asc
+
+        CHECKSUM=$(grep $ISO_NAME $ISO_DIR/sha256sum.txt.asc | cut -f1 -d' ')
     fi
-    set -e
-
-    echo "Checking to see if we have the latest $ISO:"
-    echo "  Getting signed checksum (sha256sum.txt.asc)"
-    curl -L -s -o $ISO_DIR/sha256sum.txt.asc $MIRROR/sha256sum.txt.asc
-
-    ISO_NAME=$(echo $ISO | cut -f1 -d'.')
-
-    echo "  Verifying signed checksum sha256sum.txt.asc"
-    gpg --verify $ISO_DIR/sha256sum.txt.asc
-
-    CHECKSUM=$(grep $ISO_NAME $ISO_DIR/sha256sum.txt.asc | cut -f1 -d' ')
 
     if [[ $(sha256sum $ISO_DIR/$ISO | cut -f1 -d' ') == "$CHECKSUM" ]]; then
         echo "  Checksums match, using local copy of $ISO"
@@ -95,10 +107,17 @@ create_layout() {
     popd > /dev/null 2>&1
     umount $MOUNT_POINT
 
-    if [[ -d $CUSTOM_RPMS ]]; then
-        echo "Copying custom RPMS"
-        find $CUSTOM_RPMS -type f -exec cp {} $DVD_LAYOUT/Packages \;
-    fi
+    for d in $CUSTOM_RPMS; do
+        if [[ -d $d ]]; then
+            echo "Copying custom RPMS from: $d"
+            find $d -type f -exec cp {} $DVD_LAYOUT/Packages \;
+        fi
+    done
+
+    for d in $EXTRA_DIRS; do
+        echo "Copying extra content from: $d"
+        tar -cf - -C $d . | tar -xpf - -C $DVD_LAYOUT
+    done
 
     echo "Finished Populating Layout"
 }
@@ -109,17 +128,19 @@ copy_ks_cfg() {
 }
 
 copy_guest_tools() {
-    echo "Copying $GUESTTOOLS"
-    echo "Initiallizing and fetching submodule $GUESTTOOLS"
-    git submodule init
-    git submodule update
-    cp -R ./$GUESTTOOLS/ $DVD_LAYOUT/
+    if [[ -n "$GUESTTOOLS" ]]; then
+        echo "Copying $GUESTTOOLS"
+        echo "Initiallizing and fetching submodule $GUESTTOOLS"
+        git submodule init
+        git submodule update
+        cp -R ./$GUESTTOOLS/ $DVD_LAYOUT/
+    fi
 }
 
 
 modify_boot_menu() {
     echo "Modifying grub boot menu"
-    cp ./isolinux.cfg $DVD_LAYOUT/isolinux/
+    cp $ISOLINUX_CFG $DVD_LAYOUT/isolinux/isolinux.cfg
 }
 
 cleanup_layout() {
@@ -141,8 +162,8 @@ create_newiso() {
     echo "Creating NEW ISO"
     mkisofs -r -R -J -T -v \
      -no-emul-boot -boot-load-size 4 -boot-info-table \
-     -V "$DVD_TITLE" -p "Joyent" \
-     -A "$DVD_TITLE - $CUR_TIME" \
+     -V "$DVD_TITLE" -p "$PREPARER" \
+     -A "$DVD_TITLE - $DVD_SUBTITLE" \
      -b isolinux/isolinux.bin -c isolinux/boot.cat \
      -x "lost+found" -o $ISO_FILENAME $DVD_LAYOUT
     echo "Fixing up NEW ISO"
